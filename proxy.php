@@ -29,7 +29,7 @@ define( 'CSAJAX_DEBUG', false );
  * A set of valid cross domain requests
  */
 $valid_requests = array(
-	// 'example.com'
+	'http://23.253.150.103/api/getDateTime'
 );
 
 /* * * STOP EDITING HERE UNLESS YOU KNOW WHAT YOU ARE DOING * * */
@@ -82,6 +82,14 @@ $p_request_url = parse_url( $request_url );
 if ( is_array( $request_params ) && array_key_exists('csurl', $request_params ) )
 	unset( $request_params['csurl'] );
 
+// raw data support
+$raw_data = null;
+
+if ( is_array( $request_params ) && array_key_exists('csrawdata', $request_params ) ) {
+	$raw_data = $request_params['csrawdata'];
+	unset( $request_params['csrawdata'] );
+}
+
 // ignore requests for proxy :)
 if ( preg_match( '!' . $_SERVER['SCRIPT_NAME'] . '!', $request_url ) || empty( $request_url ) || count( $p_request_url ) == 1 ) {
 	csajax_debug_message( 'Invalid request - make sure that csurl variable is not empty' );
@@ -123,7 +131,12 @@ curl_setopt( $ch, CURLOPT_HEADER, true );	   // enabled response headers
 if ( 'POST' == $request_method ) {
 	$post_data = is_array( $request_params ) ? http_build_query( $request_params ) : $request_params;
 	curl_setopt( $ch, CURLOPT_POST, true );
-	curl_setopt( $ch, CURLOPT_POSTFIELDS,  $post_data );
+	//raw data support
+	if(!empty($raw_data)) {
+		curl_setopt( $ch, CURLOPT_POSTFIELDS,  $raw_data );
+	} else {
+		curl_setopt( $ch, CURLOPT_POSTFIELDS,  $post_data );
+	}
 } elseif ( 'PUT' == $request_method || 'DELETE' == $request_method ) {
 	curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, $request_method );
 	curl_setopt( $ch, CURLOPT_POSTFIELDS, $request_params );
